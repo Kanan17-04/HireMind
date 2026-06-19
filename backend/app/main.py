@@ -11,3 +11,10 @@ app = FastAPI(
 app.include_router(
     resume_router
 )
+from app.api.routes.jd import router as jd_router
+
+app.include_router(
+    jd_router,
+    prefix="/api/jd",
+    tags=["JD Parser"],
+)
