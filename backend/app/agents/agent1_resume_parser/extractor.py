@@ -137,69 +137,42 @@ class ResumeExtractor:
                         skills.add(skill)
 
         return sorted(list(skills))
-
-    @classmethod
-    def extract_education(cls, text: str):
-        education_section = cls.get_section(
-            text,
-            r"EDUCATION\s*:?",
-            [
-                r"PROFESSIONAL\s+EXPERIENCE\s*:?",
-                r"EXPERIENCE\s*:?",
-            ],
-        )
-
-        keywords = [
-            "bachelor",
-            "master",
-            "degree",
-            "b.tech",
-            "m.tech",
-            "b.e",
-            "m.e",
-            "bsc",
-            "msc",
-            "phd",
-            "university",
-            "college",
-            "qualification",
+    @staticmethod
+    def extract_education_required(text: str):
+        education_patterns = [
+            r".*bachelor.*degree.*",
+            r".*master.*degree.*",
+            r".*phd.*",
+            r".*doctorate.*",
+            r".*b\.tech.*",
+            r".*m\.tech.*",
+            r".*b\.e.*",
+            r".*m\.e.*",
+            r".*b\.sc.*",
+            r".*m\.sc.*",
         ]
-
-        education = []
-
-        if education_section:
-            for line in education_section.split("\n"):
-                if any(keyword in line.lower() for keyword in keywords):
-                    education.append(line.strip())
-
-        qualification_block = re.search(
-            r"Highest Qualification\s*\|?\s*(.*?)(Current Location|Relocation|$)",
-            text,
-            re.IGNORECASE | re.DOTALL,
-        )
-
-        if qualification_block:
-            education.extend([
-                line.strip()
-                for line in qualification_block.group(1).split("\n")
-                if line.strip()
-            ])
-
-        return list(set(education))
-
+        results = []
+        for line in text.split("\n"):
+            cleaned = line.strip()
+            if not cleaned:
+                continue
+            for pattern in education_patterns:
+                if re.search(pattern, cleaned, re.IGNORECASE):
+                    if cleaned not in results:
+                        results.append(cleaned)
+                    break
+        return results
+    
     @staticmethod
     def extract_experience(text: str):
         summary_text = text[:3000]
-
         # FIX 2: single capture group so findall() returns strings, not tuples
         matches = re.findall(
             r"(?:\d+\+?\s*years?(?:\s+of\s+experience)?|(?:one|two|three|four|five|six|seven|eight|nine|ten)\s+years)",
             summary_text,
             re.IGNORECASE,
         )
-
         return list(set(matches))
-
     @classmethod
     def extract_projects(cls, text: str):
         # Match ONLY a PROJECTS heading
@@ -269,6 +242,6 @@ class ResumeExtractor:
             "skills": cls.extract_skills(resume_text),
             "projects": cls.extract_projects(resume_text),
             "experience": cls.extract_experience(resume_text),
-            "education": cls.extract_education(resume_text),
+            "education": cls.extract_education_required(resume_text),
             "certifications": cls.extract_certifications(resume_text),
         }
