@@ -18,3 +18,9 @@ app.include_router(
     prefix="/api/jd",
     tags=["JD Parser"],
 )
+from app.api.routes.ats import router as ats_router
+app.include_router(
+    ats_router,
+    prefix="/api/ats",
+    tags=["ATS Scoring"]
+)
